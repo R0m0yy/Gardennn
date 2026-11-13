@@ -142,7 +142,7 @@ export function buildGarden(scene, q) {
     const c = new THREE.Color(), mix = (hex, k) => c.lerp(new THREE.Color(hex), k);
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
       const x = -half + i * step, z = -half + j * step, k = j * n + i, h = data[k];
-      pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; uv[k * 2] = x / 0.9; uv[k * 2 + 1] = z / 0.9;
+      pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; uv[k * 2] = x / 0.38; uv[k * 2 + 1] = z / 0.38;
       const gd = grassDensity(x, z), s = surfaceAt(x, z).name, nz = fbm(x * 0.9, z * 0.9, 3);
       c.set(0xa08a62); mix(0x5f8a34, Math.min(1, gd * 1.1) * 0.9); mix(0x86a045, Math.max(0, nz - 0.4) * 0.9 * gd);
       if (s === 'packed earth') mix(0xb09a74, 0.75); if (s === 'launch rail') mix(0xa48c66, 0.8);
@@ -179,6 +179,18 @@ export function buildGarden(scene, q) {
     const s = 0.018 + r() * 0.028; d.position.set(x, Y(x, z) - 0.002, z); d.rotation.set(0, r() * 6.283, 0); d.scale.set(s, s, s);
     c.set(r() > 0.3 ? 0x4e9a3a : 0x67ad45).multiplyScalar(0.75 + r() * 0.4); return true;
   }, false);
+
+  // ---- ground litter: pebbles, twigs and fallen petals give the bare soil scale
+  scatter(scene, new THREE.IcosahedronGeometry(1, 1), Mat.color(0xffffff, 0.9), Math.round(q.clover * 0.5), rnd, (r, d, c) => {
+    const rad = Math.pow(r(), 0.8) * 12, a = r() * 6.283, x = Math.cos(a) * rad + 1.5, z = Math.sin(a) * rad; if (surfaceAt(x, z).name === 'water') return false;
+    const s = 0.002 + r() * r() * 0.012; d.position.set(x, Y(x, z) + s * 0.25, z); d.rotation.set(r() * 6, r() * 6, r() * 6); d.scale.set(s * (1 + r()), s * 0.6, s);
+    const v = 0.45 + r() * 0.45; c.setRGB(v, v * (0.9 + r() * 0.1), v * (0.75 + r() * 0.2)); return true; }, true);
+  scatter(scene, new THREE.CylinderGeometry(0.5, 0.35, 1, 5), Mat.wood('dark'), Math.round(q.clover * 0.08), rnd, (r, d, c) => {
+    const x = (r() - 0.5) * 22 + 1, z = (r() - 0.5) * 22; if (surfaceAt(x, z).name === 'water') return false;
+    const len = 0.03 + r() * 0.12, th = 0.002 + r() * 0.004; d.position.set(x, Y(x, z) + th * 0.5, z); d.rotation.set(Math.PI / 2 + (r() - 0.5) * 0.2, 0, r() * 6.283, 'ZXY'); d.scale.set(th, len, th); c.setScalar(0.7 + r() * 0.5); return true; }, true);
+  scatter(scene, new THREE.CircleGeometry(1, 7), Mat.color(0xffffff, 0.7, { side: THREE.DoubleSide }), Math.round(q.clover * 0.1), rnd, (r, d, c) => {
+    const x = (r() - 0.5) * 20 + 2, z = (r() - 0.5) * 20; if (surfaceAt(x, z).name === 'water') return false;
+    const s = 0.006 + r() * 0.012; d.position.set(x, Y(x, z) + 0.0015, z); d.rotation.set(-Math.PI / 2 + (r() - 0.5) * 0.4, 0, r() * 6.283); d.scale.set(s, s * 1.6, s); c.set([0xf2c230, 0xe58ab0, 0xf4efe2, 0x9a6fd0, 0xb98a4a][(r() * 5) | 0]); return true; }, false);
 
   // ---- flowers
   const statics = new THREE.Group(); scene.add(statics);
@@ -251,7 +263,7 @@ export function buildGarden(scene, q) {
     for (let s = 0; s < 4; s++) for (let i = 0; i < 46; i++) { const t = -17.2 + i * 0.76, x = s === 0 ? t : s === 1 ? t : s === 2 ? -17.2 : 17.2, z = s === 0 ? -17.2 : s === 1 ? 17.2 : t; d.position.set(x, Y(x, z) + 1.1 + (hashI(i, s) - 0.5) * 0.1, z); d.rotation.set(0, s > 1 ? Math.PI / 2 : 0, (hashI(i + 9, s) - 0.5) * 0.03); d.updateMatrix(); im.setMatrixAt(k++, d.matrix); }
     im.castShadow = im.receiveShadow = true; scene.add(im);
     const far = new THREE.Group(), fm = [Mat.color(0x3d6b2e, 1), Mat.color(0x4d7c35, 1), Mat.color(0x2f5a2a, 1)];
-    for (let i = 0; i < 46; i++) { const a = i / 46 * 6.283 + rnd() * 0.1, r = 24 + rnd() * 10, s = 3 + rnd() * 4.5; const m = sph(s, fm[i % 3], Math.cos(a) * r, 1.5 + rnd() * 3, Math.sin(a) * r, 9); m.scale.y = 0.8 + rnd() * 0.7; far.add(m); }
+    for (let i = 0; i < 46; i++) { const a = i / 46 * 6.283 + rnd() * 0.1, r = 24 + rnd() * 10, s = 3 + rnd() * 4.5; const m = sph(s, fm[i % 3], Math.cos(a) * (r + 6), 1.5 + rnd() * 3, Math.sin(a) * (r + 6), 18); m.scale.y = 0.8 + rnd() * 0.7; far.add(m); }
     // a tree trunk towering in the north-west corner, with roots
     const bark = new THREE.MeshStandardMaterial({ map: T.bark(), roughness: 1 }); const tx = -13.5, tz = -12.5;
     far.add(cyl(1.5, 2.3, 14, bark, tx, 6.5, tz, 16)); for (let i = 0; i < 7; i++) { const a = i * 0.9, r0 = rod([tx + Math.cos(a) * 1.6, 0.9, tz + Math.sin(a) * 1.6], [tx + Math.cos(a) * 5, -0.2, tz + Math.sin(a) * 5], 0.35, bark, 8); far.add(r0); }

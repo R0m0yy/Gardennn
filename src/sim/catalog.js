@@ -62,7 +62,7 @@ export const ENGINES = {
               note: 'Serious power, serious weight. Wants a stiff airframe.' },
   wright:   { name: '1903 four-cylinder, twin chain-driven pushers', mass: 0.0030, thrust: 0.036, vPitch: 9.0, throttle: 'none', endurance: 75, spool: 0.8, torque: 0, gyro: 0, prop: 0.036, era: 1, sound: 'wright', props: 2, fade: 0.18,
               note: 'No throttle: it runs or it doesn\'t. Counter-rotating props cancel torque; power sags as it heats.' },
-  rotary:   { name: 'Nine-cylinder rotary',     mass: 0.0027, thrust: 0.046, vPitch: 13,   throttle: 'blip',   endurance: 120, spool: 0.25, torque: 0.006, gyro: 1.3e-6,  prop: 0.038, era: 2, sound: 'rotary', props: 1,
+  rotary:   { name: 'Nine-cylinder rotary',     mass: 0.0027, thrust: 0.046, vPitch: 13,   throttle: 'blip',   endurance: 120, spool: 0.25, torque: 0.004, gyro: 1.0e-6,  prop: 0.038, era: 2, sound: 'rotary', props: 1,
               note: 'The whole engine spins with the propeller. Huge power-to-weight; the gyroscope fights every turn.' },
   inline:   { name: 'Supercharged inline',      mass: 0.0048, thrust: 0.11, vPitch: 19,   throttle: 'smooth', endurance: 100, spool: 0.3,  torque: 0.008, gyro: 4e-7,    prop: 0.042,  era: 3, sound: 'inline', props: 1,
               note: '1930s-40s muscle. Smooth throttle and enough thrust to break weak wings.' },

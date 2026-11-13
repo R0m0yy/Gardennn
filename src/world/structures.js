@@ -1,18 +1,13 @@
 // Hand-built miniature architecture: the inventor's workshop, launch sites, the Garden Fortress and trench line.
 import * as THREE from 'three';
-import { WORLD as W, groundHeight as Y, addCollider, mulberry } from '../sim/world.js';
+import { WORLD as W, groundHeight as Y, addCollider, mulberry, HOOPS } from '../sim/world.js';
+export { HOOPS };
 import { Mat, T } from '../gfx/textures.js';
 import { bake, box, cyl, sph } from '../gfx/util.js';
 import { rod } from '../gfx/aircraftMesh.js';
 
 export const HUT = { x: -0.55, z: -0.5, w: 0.52, d: 0.36, wall: 0.2, ridge: 0.34 };
 export const PAD = { x: 0.42, z: 0.38 };
-// Sunflower Circuit hoops: centre, radius, facing heading
-export const HOOPS = [
-  { x: 5.2, y: 0.55, z: 2.6, r: 0.24, h: 0.6 }, { x: 8.2, y: 0.85, z: 5.2, r: 0.24, h: 2.2 },
-  { x: 6.2, y: 0.95, z: 8.0, r: 0.24, h: 4.2 }, { x: 3.6, y: 0.7, z: 5.6, r: 0.24, h: 5.6 },
-];
-
 function lantern(lit = true) {
   const g = new THREE.Group(), br = Mat.metal('brass');
   g.add(cyl(0.006, 0.007, 0.002, br, 0, 0, 0, 8), cyl(0.005, 0.002, 0.004, br, 0, 0.016, 0, 8), rod([0, 0.018, 0], [0, 0.03, 0], 0.0006, br, 4));
@@ -27,8 +22,8 @@ function buildHut(scene, out) {
   const g = new THREE.Group(), h = HUT, wd = Mat.wood('mid'), dk = Mat.wood('dark'), lt = Mat.wood('light'), base = Y(h.x, h.z) + 0.004;
   g.position.set(h.x, base, h.z);
   // plank floor + boardwalk
-  for (let i = 0; i < 13; i++) g.add(box(0.039, 0.006, h.d + 0.02, i % 2 ? wd : dk, -h.w / 2 + 0.02 + i * 0.04, 0.003, 0));
-  for (let i = 0; i < 16; i++) g.add(box(0.05 + (i % 3) * 0.004, 0.005, 0.034, i % 2 ? wd : Mat.wood('grey'), 0.02 + (i % 2) * 0.004, 0.001, h.d / 2 + 0.03 + i * 0.037));
+  for (let i = 0; i < 37; i++) g.add(box(0.0135, 0.006, h.d + 0.02, [wd, dk, lt, wd][i % 4], -h.w / 2 + 0.008 + i * 0.014, 0.003 + (i % 3) * 0.0004, 0));
+  for (let i = 0; i < 34; i++) g.add(box(0.045 + (i % 3) * 0.004, 0.004, 0.016, [wd, Mat.wood('grey'), lt][i % 3], 0.02 + (i % 2) * 0.004, 0.001, h.d / 2 + 0.02 + i * 0.0175));
   // timber frame
   const post = (x, z, hh = h.wall) => g.add(box(0.016, hh, 0.016, dk, x, hh / 2, z));
   for (const x of [-h.w / 2, -h.w / 6, h.w / 6, h.w / 2]) { post(x, -h.d / 2); if (Math.abs(x) > 0.2) post(x, h.d / 2); }
@@ -70,7 +65,7 @@ function buildHut(scene, out) {
   const bn = new THREE.Mesh(new THREE.PlaneGeometry(0.045, 0.09), new THREE.MeshStandardMaterial({ map: T.banner(), side: THREE.DoubleSide, roughness: 0.9 })); bn.position.set(-h.w / 2 - 0.004, 0.135, h.d / 2 + 0.012); g.add(bn);
   // awning + assembly deck (where prototypes are rolled out)
   const ax = PAD.x - h.x, az = PAD.z - h.z;
-  for (let i = 0; i < 11; i++) g.add(box(0.036, 0.006, 0.4, i % 2 ? wd : Mat.wood('grey'), ax - 0.18 + i * 0.037, 0.001, az));
+  for (let i = 0; i < 24; i++) g.add(box(0.016, 0.006, 0.4, [wd, Mat.wood('grey'), Mat.wood('light')][i % 3], ax - 0.2 + i * 0.017, 0.001 + (i % 2) * 0.0006, az));
   const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.22, 6, 4), new THREE.MeshStandardMaterial({ map: T.fabric(), color: 0xd98a70, side: THREE.DoubleSide, roughness: 0.9 })); { const p = cloth.geometry.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, -Math.cos(p.getX(i) * 9) * 0.012 - Math.cos(p.getY(i) * 12) * 0.008); cloth.geometry.computeVertexNormals(); }
   cloth.rotation.x = -Math.PI / 2 + 0.22; cloth.position.set(h.w / 2 + 0.17, h.wall - 0.012, 0.0); g.add(cloth);
   for (const dz of [-0.1, 0.1]) g.add(rod([h.w / 2 + 0.31, 0, dz], [h.w / 2 + 0.31, h.wall - 0.03 + (dz < 0 ? 0.04 : -0.01), dz], 0.003, lt, 5));

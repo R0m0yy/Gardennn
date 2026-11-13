@@ -18,7 +18,7 @@ export function surfaceDeflection(p, side, eta, aft, ctrl) {
   const allMoving = p.ctrlFrac >= 0.85, tau = Math.sqrt(p.ctrlFrac);
   if (p.control === 'elevator') return ctrl.pitch * (aft ? -1 : 1) * (allMoving ? 11 : 24) * DEG;
   if (p.control === 'rudder') return -ctrl.yaw * (aft ? 1 : -1) * (allMoving ? 14 : 26) * DEG;
-  if (p.control === 'aileron') return eta > 0.4 ? -ctrl.roll * side * 20 * DEG : 0;
+  if (p.control === 'aileron') return eta > 0.4 ? -ctrl.roll * side * 13 * DEG : 0;
   if (p.control === 'warp') return -ctrl.roll * side * eta * 9 * DEG / Math.max(tau, 0.3);
   if (p.control === 'elevon') return (ctrl.pitch * (aft ? -1 : 1) * 0.6 - ctrl.roll * side * 0.55) * 24 * DEG;
   return 0;
@@ -153,6 +153,7 @@ export class Aircraft {
     // quick static-margin estimate (used by the pilot-assist to tame unstable designs)
     { const mac = main ? main.chord * (1 + main.taper) / 2 : 0.03, e0 = this.staticEval(4, 1 * DEG), e1 = this.staticEval(4, 3 * DEG);
       const dL = e1.L - e0.L; this.smEst = dL > 1e-9 ? -(e1.Mp - e0.Mp) / dL / mac : 0.2; }
+    { let Lm = 0; for (let al = 4; al <= 18; al += 2) Lm = Math.max(Lm, this.staticEval(4, al * DEG).L); this.vsEst = Lm > 0 ? 4 * Math.sqrt(this.mass * G / Lm) : 3; }
   }
 
   // panel position and axes (re-evaluated as wings flex)
@@ -298,6 +299,12 @@ export class Aircraft {
         // in a banked turn hold the nose up a little
         ctrl.pitch += assist * clamp(1 / Math.max(Math.cos(hpr.roll), 0.5) - 1, 0, 1) * 0.5;
       }
+      // tail-draggers: lift the tail during the take-off run so the wing is not dragged along near its stall
+      if (!air && hpr.pitch > 0.07 && this.engines.some((e) => e.level > 0.3)) ctrl.pitch -= assist * clamp((hpr.pitch - 0.07) * 6, 0, 0.5);
+      // do not let the pilot haul it into the air (or hold it) below flying speed
+      const slow = this.airspeed / this.vsEst;
+      if (ctrl.pitch > 0 && (!air || agl < 0.08)) ctrl.pitch *= smooth(0.95, 1.2, slow);
+      if (air && agl > 0.06 && slow < 1.15) ctrl.pitch -= assist * clamp((1.15 - slow) * 6, 0, 1.5);
       const bankTarget = input.roll * 0.9;       // stick commands bank angle, releases to wings-level
       const err = bankTarget - hpr.roll;
       this._rollI = clamp((this._rollI || 0) + err * h * 1.2, -0.5, 0.5);   // trims out engine torque
@@ -353,7 +360,7 @@ export class Aircraft {
       T = Math.max(T, -0.2 * sp.thrust * e.level);
       if (sp.prop > 0 && e.level < 0.05) T = -0.5 * RHO * Vax * Math.abs(Vax) * Math.PI * sp.prop * sp.prop / 4 * 0.1 * sp.props; // windmilling prop
       e.thrust = T; e.rpm = e.level * fac;
-      e.wash = T > 0 && sp.prop > 0 ? Math.sqrt(2 * T / (RHO * Math.PI * sp.prop * sp.prop / 4)) * 0.6 : 0;
+      e.wash = T > 0 && sp.prop > 0 ? Math.sqrt(2 * T / (RHO * Math.PI * sp.prop * sp.prop / 4)) * 0.3 : 0;
       F[0] += T; M = add(M, cross(e.r, [T, 0, 0]));
       M[0] -= sp.torque * Math.max(T, 0);
       if (sp.gyro) { const hg = sp.gyro * Math.sqrt(Math.max(e.level, 0)); M[1] -= w[2] * hg; M[2] += w[1] * hg; }
@@ -563,6 +570,7 @@ export class Aircraft {
     else if (out.gLimit < 3) wr.push({ lvl: 'warn', msg: `Wing strength is ${out.gLimit.toFixed(1)} g. Fly gently.` });
     if (this.engines.length && out.maxSpeed == null) wr.push({ lvl: 'bad', msg: 'Not enough thrust for level flight: it will only prolong the glide.' });
     for (const p of bp.parts) if ('x' in p && p.type !== 'ballast' && p.x > this.fusLen + 0.02) wr.push({ lvl: 'warn', msg: `A part sits ${Math.round((p.x - this.fusLen) * 1000)} mm beyond the end of the fuselage (unsupported).` });
+    { const pc = this.contacts.filter((c) => c.kind === 'prop'), low = this.lowestY; if (this.gear && pc.some((c) => c.r0[1] < low + 0.001)) wr.push({ lvl: 'bad', msg: 'The propeller reaches below the landing gear: it will strike the ground. Use taller gear, raise the engine, or mount it as a pusher above the frame.' }); }
     if (bp.parts.some((p) => p.type === 'engine' && ENGINES[p.kind].prop > 0) && !bp.parts.some((p) => p.type === 'gear')) wr.push({ lvl: 'info', msg: 'No landing gear: the propeller is at risk on every landing.' });
     if (surfs.some((p) => MATERIALS[p.material].soak > 0.5)) wr.push({ lvl: 'info', msg: 'Paper and cardboard soften and gain weight in rain.' });
     if (out.wingLoading > 2.2) wr.push({ lvl: 'warn', msg: 'High wing loading: needs a long, fast take-off run and lands hot.' });

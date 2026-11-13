@@ -6,7 +6,7 @@ const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
 export class CameraRig {
   constructor(camera) {
     this.cam = camera; this.mode = 'explore';
-    this.yaw = 0.55; this.pitch = 0.62; this.dist = 0.55;        // explore
+    this.yaw = 0.55; this.pitch = 0.5; this.dist = 0.3;        // explore
     this.chaseDist = 0.42; this.target = new THREE.Vector3(); this.lookAt = new THREE.Vector3(); this.shake = 0;
     this.orbit = { yaw: 0.7, pitch: 0.45, dist: 0.5 };
   }
@@ -30,7 +30,7 @@ export class CameraRig {
       this.orbit.yaw *= Math.exp(-dt * 1.2); this.orbit.pitch += (0.22 - this.orbit.pitch) * (1 - Math.exp(-dt * 1.2));
       const f = tmp.set(1, 0, 0).applyQuaternion(q); const hd = Math.atan2(f.x, f.z) + Math.PI + this.orbit.yaw, cp = Math.cos(this.orbit.pitch);
       tmp2.set(Math.sin(hd) * cp, Math.sin(this.orbit.pitch) - f.y * 0.35, Math.cos(hd) * cp).multiplyScalar(this.chaseDist).add(focus);
-      cam.position.lerp(tmp2, snap ? 1 : 1 - Math.exp(-dt * 4.5)); this.target.lerp(tmp.copy(focus).addScaledVector(f, 0.08), snap ? 1 : 1 - Math.exp(-dt * 10)); this.lookAt.copy(this.target);
+      cam.position.lerp(tmp2, snap ? 1 : 1 - Math.exp(-dt * 11)); this.target.lerp(tmp.copy(focus).addScaledVector(f, 0.08), snap ? 1 : 1 - Math.exp(-dt * 10)); this.lookAt.copy(this.target);
       fov = 42 + Math.min(16, speed * 1.6);
     } else if (this.mode === 'cockpit') {
       tmp.set(-0.004, 0.011, 0).applyQuaternion(q).add(focus); cam.position.copy(tmp);

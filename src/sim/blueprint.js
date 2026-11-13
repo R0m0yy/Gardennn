@@ -153,6 +153,7 @@ export const TEMPLATES = {
 
 export function cloneBlueprint(b, rename) {
   const c = JSON.parse(JSON.stringify(b));
+  c.base = b.base || b.id;
   c.id = newId();
   c.parts.forEach((p) => { p.id = newId(); });
   if (rename) c.name = rename;
@@ -165,7 +166,7 @@ export function sanitizeBlueprint(raw) {
   try {
     if (!raw || !Array.isArray(raw.parts)) return null;
     const out = { v: BLUEPRINT_VERSION, id: String(raw.id || newId()), name: String(raw.name || 'Recovered design').slice(0, 40), era: raw.era | 0,
-      year: raw.year || '', launch: ['hill', 'rail', 'runway'].includes(raw.launch) ? raw.launch : 'hill', historical: !!raw.historical, paint: raw.paint || null, trim: Math.max(-1, Math.min(1, Number(raw.trim) || 0)), desc: String(raw.desc || ''), parts: [] };
+      year: raw.year || '', launch: ['hill', 'rail', 'runway'].includes(raw.launch) ? raw.launch : 'hill', historical: !!raw.historical, base: raw.base ? String(raw.base) : null, paint: raw.paint || null, trim: Math.max(-1, Math.min(1, Number(raw.trim) || 0)), desc: String(raw.desc || ''), parts: [] };
     for (const p of raw.parts) {
       const sch = PART_SCHEMA[p.type];
       if (!sch) continue;

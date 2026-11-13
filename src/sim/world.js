@@ -33,6 +33,13 @@ export const SITES = {
   runway: { name: 'Grass Runway', pos: [W.runway.x0 + 0.2, 0, W.runway.z], heading: Math.PI / 2, kind: 'runway' },
 };
 
+// Sunflower Circuit hoops: centre, radius, facing heading
+export const HOOPS = [
+  { x: 5.2, y: 0.55, z: 2.6, r: 0.24, h: 0.6 }, { x: 8.2, y: 0.85, z: 5.2, r: 0.24, h: 2.2 },
+  { x: 6.2, y: 0.95, z: 8.0, r: 0.24, h: 4.2 }, { x: 3.6, y: 0.7, z: 5.6, r: 0.24, h: 5.6 },
+];
+
+
 const d2 = (x, z, o) => Math.hypot(x - o.x, z - o.z);
 const inStrip = (x, z, s, pad = 0) => x > s.x0 - pad && x < s.x1 + pad && Math.abs(z - s.z) < s.w / 2 + pad;
 const stripBlend = (x, z, s, pad) => { // 1 inside strip, 0 beyond pad

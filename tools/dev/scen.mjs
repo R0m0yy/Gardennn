@@ -1,7 +1,7 @@
 // scripted "player" flights used for tuning: ground start, throttle up, rotate, climb, cut, glide, land
-import { Aircraft } from '../src/sim/flightModel.js';
-import { TEMPLATES } from '../src/sim/blueprint.js';
-import { hprFromQ } from '../src/sim/vec.js';
+import { Aircraft } from '../../src/sim/flightModel.js';
+import { TEMPLATES } from '../../src/sim/blueprint.js';
+import { hprFromQ } from '../../src/sim/vec.js';
 const k = process.argv[2], assist = +(process.argv[3] ?? 1), rail = process.argv[4] === 'rail', wind = +(process.argv[5] || 0);
 const env = { ground: () => 0, normal: () => [0, 1, 0], surface: () => ({ mu: 1, roll: 1, rail }), wind: () => [0, 0, wind] }; // heading 0 = -Z, so +Z wind is a headwind
 const ac = new Aircraft(TEMPLATES[k]); const a = ac.analyze();
