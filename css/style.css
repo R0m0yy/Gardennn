@@ -1,0 +1,5 @@
+html,body{margin:0;height:100%;overflow:hidden;background:#1b1a14;font-family:Georgia,'Times New Roman',serif;color:#2f2618}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#ui{position:fixed;inset:0;pointer-events:none}
+#boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#2a2418;z-index:50;transition:opacity .6s}
+.boot-card{text-align:center;color:#eadfc4}.boot-card h1{font-size:54px;letter-spacing:.2em;margin:0}.boot-card h2{font-weight:normal;font-style:italic;margin:.2em 0 1em;color:#c9a35a}
