@@ -71,7 +71,7 @@ test('accessible assist recovers the same stall attempt', () => {
   const a1 = frac(1), a0 = frac(0); assert.ok(a1 < 0.08 && a1 < a0 * 0.5, `stalled ${(a1 * 100).toFixed(0)}% of the time with assist vs ${(a0 * 100).toFixed(0)}% without`);
 });
 test('powered aircraft take off; propulsion types differ', () => {
-  const scout = takeoff(TEMPLATES.scout_1917), flyer = takeoff(TEMPLATES.wright_1903, { env: flat({ rail: true }), secs: 12, climb: 0.07 }), racer = takeoff(TEMPLATES.racer_1935);
+  const scout = takeoff(TEMPLATES.scout_1917), flyer = takeoff(TEMPLATES.wright_1903, { env: flat({ rail: true }), secs: 12, climb: 0.3 }), racer = takeoff(TEMPLATES.racer_1935);
   assert.ok(scout.maxAgl > 3 && scout.ac.condition > 0.95, `scout climbed ${scout.maxAgl.toFixed(1)} m`); assert.ok(racer.maxAgl > 5);
   assert.ok(flyer.off != null && flyer.maxAgl > 0.3 && flyer.maxAgl < scout.maxAgl / 3, `Flyer barely climbs (${flyer.maxAgl.toFixed(2)} m)`); assert.ok(flyer.off > scout.off);
   const rubber = takeoff(mod('card_glider', (b) => { b.parts.push({ ...PART_DEFAULTS.engine(), id: 'e', kind: 'rubber' }, { ...PART_DEFAULTS.gear(), id: 'g', height: 0.03 }); }), { secs: 40 });
@@ -115,7 +115,7 @@ test('blueprints: serialisation round-trip, clamping and junk rejection', () => 
   assert.ok(w.parts.some((p) => p.type === 'fuselage') && w.parts.some((p) => p.type === 'pilot'), 'missing essentials are restored'); assert.doesNotThrow(() => new Aircraft(w).analyze());
 });
 test('world: terrain grid, surfaces, colliders, weather and course logic', () => {
-  assert.ok(Math.abs(groundHeight(0.05, 0.05) - GRID.data[220 * 441 + 220]) < 0.01); assert.ok(groundHeight(WORLD.hill.x, WORLD.hill.z) > 1.2, 'the hill is a hill');
+  { const i = Math.round(GRID.half / GRID.step); assert.ok(Math.abs(groundHeight(0.02, 0.02) - GRID.data[i * GRID.n + i]) < 0.01, 'physics reads the same grid the terrain mesh is built from'); } assert.ok(groundHeight(WORLD.hill.x, WORLD.hill.z) > 1.2, 'the hill is a hill');
   assert.equal(surfaceAt(WORLD.pond.x, WORLD.pond.z).name, 'water'); assert.equal(surfaceAt(WORLD.rail.x0 + 1, WORLD.rail.z).rail, true); assert.ok(surfaceAt(WORLD.mud.x, WORLD.mud.z).roll > 3);
   clearColliders(); addCollider({ t: 'cyl', x: 5, z: 5, r: 0.1, y0: 0, y1: 1 }); assert.ok(collidePoint([5.05, 0.5, 5]).depth > 0.04); assert.equal(collidePoint([5.2, 0.5, 5]), null); clearColliders();
   const w = new Weather(); w.set('gusty', true); const hi = Math.hypot(...w.wind([0, 3, 8])), lo = Math.hypot(...w.wind([0, groundHeight(0, 8) + 0.02, 8])); assert.ok(hi > lo, 'wind is sheltered near the ground');

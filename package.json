@@ -1,1 +1,1 @@
-{"name":"evolution-garden-wars","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node tools/serve.mjs","test":"node --test tests/sim.test.mjs","e2e":"node tests/e2e/run.mjs"},"devDependencies":{"three":"0.170.0"}}
+{"name":"evolution-garden-wars","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node tools/serve.mjs","test":"node --test tests/sim.test.mjs","e2e":"node tests/e2e/run.mjs","build":"node tools/build-static.mjs dist"},"devDependencies":{"three":"0.170.0"}}

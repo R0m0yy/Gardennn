@@ -13,7 +13,7 @@ export const defaults = () => ({
 });
 export function load() {
   let raw = null;
-  try { raw = localStorage.getItem(KEY); if (!raw) return defaults(); const d = JSON.parse(raw), out = defaults();
+  try { raw = localStorage.getItem(KEY); if (!raw) { const d = defaults(); d.fresh = true; return d; } const d = JSON.parse(raw), out = defaults();
     if (typeof d !== 'object' || !d) throw new Error('not an object');
     Object.assign(out.settings, d.settings || {}); Object.assign(out.progress, d.progress || {});
     out.mode = ['journey', 'sandbox'].includes(d.mode) ? d.mode : 'journey';
@@ -28,5 +28,5 @@ export function load() {
     console.warn('Save data was unreadable and has been set aside:', e.message); const d = defaults(); d.recovered = true; return d;
   }
 }
-export function store(data) { try { const { recovered, ...d } = data; localStorage.setItem(KEY, JSON.stringify(d)); return true; } catch (e) { console.warn('Could not save:', e.message); return false; } }
+export function store(data) { try { const { recovered, fresh, ...d } = data; localStorage.setItem(KEY, JSON.stringify(d)); return true; } catch (e) { console.warn('Could not save:', e.message); return false; } }
 export function wipe() { try { localStorage.removeItem(KEY); } catch {} }

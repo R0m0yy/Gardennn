@@ -6,9 +6,9 @@ import { bake, box, cyl, sph } from '../gfx/util.js';
 import { rod } from '../gfx/aircraftMesh.js';
 
 export const QUALITY = {
-  low: { grass: 22000, clover: 3000, leaves: 900, shadow: 1024, grassShadow: false, dew: 0, pr: 1 },
-  medium: { grass: 55000, clover: 7000, leaves: 2200, shadow: 2048, grassShadow: false, dew: 120, pr: 1.5 },
-  high: { grass: 110000, clover: 12000, leaves: 4000, shadow: 4096, grassShadow: true, dew: 260, pr: 2 },
+  low: { grass: 30000, clover: 3000, leaves: 900, shadow: 1024, grassShadow: false, dew: 0, pr: 1 },
+  medium: { grass: 75000, clover: 7000, leaves: 2200, shadow: 2048, grassShadow: false, dew: 120, pr: 1.5 },
+  high: { grass: 150000, clover: 12000, leaves: 4000, shadow: 4096, grassShadow: true, dew: 260, pr: 2 },
 };
 
 // ---------------------------------------------------------------- swaying vegetation material
@@ -160,7 +160,7 @@ export function buildGarden(scene, q) {
   const grassMat = vegMaterial({ color: 0xffffff }), tints = [0x7fb23c, 0x6aa332, 0x8cc04a, 0x5d962e, 0x9ac552, 0xb0b84e];
   out.grass = scatter(scene, bladeGeo(), grassMat, q.grass, rnd, (r, d, c) => {
     // denser near the heart of the garden
-    const rad = Math.pow(r(), 0.75) * 19, a = r() * 6.283, x = Math.cos(a) * rad + 1.5, z = Math.sin(a) * rad;
+    const rad = Math.pow(r(), 0.8) * 27, a = r() * 6.283, x = Math.cos(a) * rad + 1.5, z = Math.sin(a) * rad;
     const gd = grassDensity(x, z); if (r() > gd) return false;
     const h = (0.1 + r() * 0.3) * (0.55 + 0.45 * gd) * (0.7 + 0.6 * fbm(x * 0.4, z * 0.4, 2));
     d.position.set(x, Y(x, z) - 0.004, z); d.rotation.set((r() - 0.5) * 0.5, r() * 6.283, (r() - 0.5) * 0.5); d.scale.set(0.016 + r() * 0.022, h, h);
@@ -168,13 +168,13 @@ export function buildGarden(scene, q) {
   }, q.grassShadow);
   const leafMat = vegMaterial({ color: 0xffffff, map: T.leaf() });
   out.leaves = scatter(scene, leafGeo(0.45, 0.2, 0.3), leafMat, q.leaves, rnd, (r, d, c) => {
-    const x = (r() - 0.5) * 34, z = (r() - 0.5) * 34, gd = grassDensity(x, z); if (gd < 0.3 || r() > gd) return false;
+    const x = (r() - 0.5) * 48, z = (r() - 0.5) * 48, gd = grassDensity(x, z); if (gd < 0.3 || r() > gd) return false;
     const s = 0.14 + r() * 0.26; d.position.set(x, Y(x, z) - 0.003, z); d.rotation.set(0.25 + r() * 0.5, r() * 6.283, 0, 'YXZ'); d.scale.set(s, s, s);
     c.set(r() > 0.5 ? 0x4f9a36 : 0x62a83e).multiplyScalar(0.8 + r() * 0.35); return true;
   }, true);
   out.clover = scatter(scene, cloverGeo(), vegMaterial({ color: 0xffffff }), q.clover, rnd, (r, d, c) => {
     const rad = Math.pow(r(), 0.6) * 15, a = r() * 6.283, x = Math.cos(a) * rad + 1, z = Math.sin(a) * rad;
-    const gd = grassDensity(x, z), s0 = surfaceAt(x, z).name; if (s0 === 'water' || s0 === 'launch rail' || s0 === 'packed earth' || s0 === 'mud') return false;
+    const gd = grassDensity(x, z), s0 = surfaceAt(x, z).name; if (s0 === 'water' || s0 === 'launch rail' || s0 === 'mud' || (s0 === 'packed earth' && (r() > 0.3 || Math.hypot(x, z) < 0.4 || x > 1.4))) return false;
     if (gd > 0.85 && r() > 0.3) return false;
     const s = 0.018 + r() * 0.028; d.position.set(x, Y(x, z) - 0.002, z); d.rotation.set(0, r() * 6.283, 0); d.scale.set(s, s, s);
     c.set(r() > 0.3 ? 0x4e9a3a : 0x67ad45).multiplyScalar(0.75 + r() * 0.4); return true;
@@ -183,8 +183,8 @@ export function buildGarden(scene, q) {
   // ---- ground litter: pebbles, twigs and fallen petals give the bare soil scale
   scatter(scene, new THREE.IcosahedronGeometry(1, 1), Mat.color(0xffffff, 0.9), Math.round(q.clover * 0.5), rnd, (r, d, c) => {
     const rad = Math.pow(r(), 0.8) * 12, a = r() * 6.283, x = Math.cos(a) * rad + 1.5, z = Math.sin(a) * rad; if (surfaceAt(x, z).name === 'water') return false;
-    const s = 0.002 + r() * r() * 0.012; d.position.set(x, Y(x, z) + s * 0.25, z); d.rotation.set(r() * 6, r() * 6, r() * 6); d.scale.set(s * (1 + r()), s * 0.6, s);
-    const v = 0.45 + r() * 0.45; c.setRGB(v, v * (0.9 + r() * 0.1), v * (0.75 + r() * 0.2)); return true; }, true);
+    const s = 0.0015 + r() * r() * 0.008; d.position.set(x, Y(x, z) + s * 0.25, z); d.rotation.set(r() * 6, r() * 6, r() * 6); d.scale.set(s * (1 + r()), s * 0.6, s);
+    const v = 0.3 + r() * 0.3; c.setRGB(v, v * (0.9 + r() * 0.1), v * (0.72 + r() * 0.2)); return true; }, true);
   scatter(scene, new THREE.CylinderGeometry(0.5, 0.35, 1, 5), Mat.wood('dark'), Math.round(q.clover * 0.08), rnd, (r, d, c) => {
     const x = (r() - 0.5) * 22 + 1, z = (r() - 0.5) * 22; if (surfaceAt(x, z).name === 'water') return false;
     const len = 0.03 + r() * 0.12, th = 0.002 + r() * 0.004; d.position.set(x, Y(x, z) + th * 0.5, z); d.rotation.set(Math.PI / 2 + (r() - 0.5) * 0.2, 0, r() * 6.283, 'ZXY'); d.scale.set(th, len, th); c.setScalar(0.7 + r() * 0.5); return true; }, true);
@@ -197,11 +197,11 @@ export function buildGarden(scene, q) {
   const put = (proto, x, z, s = 1, ry = rnd() * 6.283, colR = 0, colH = 0) => { const o = proto.clone(); o.position.set(x, Y(x, z) - 0.004, z); o.rotation.y = ry; o.scale.setScalar(s); statics.add(o); if (colR) addCollider({ t: 'cyl', x, z, r: colR * s, y0: Y(x, z) - 0.1, y1: Y(x, z) + colH * s }); return o; };
   const sunP = bake(sunflower(1.5)), danP = bake(dandelion(0.3)), cloP = bake(cloverBlossom(0.12)), cloW = bake(cloverBlossom(0.11, 0xf2ecf0)), vioP = bake(violet(0.09)), daiP = bake(daisy(0.16)), mushP = bake(mushroom(1));
   out.sunflowers = [];
-  for (const [x, z, s] of [[W.flowerbed.x - 1.4, W.flowerbed.z + 0.6, 1.1], [W.flowerbed.x + 1.2, W.flowerbed.z - 0.8, 0.95], [W.flowerbed.x + 0.4, W.flowerbed.z + 1.9, 1.2], [-1.3, -1.25, 0.7], [-9.5, -3.5, 1.0], [11, -1.5, 1.15]]) {
+  for (const [x, z, s] of [[W.flowerbed.x - 1.4, W.flowerbed.z + 0.6, 1.1], [W.flowerbed.x + 1.2, W.flowerbed.z - 0.8, 0.95], [W.flowerbed.x + 0.4, W.flowerbed.z + 1.9, 1.2], [-1.3, -1.25, 0.7], [-9.5, -3.5, 1.0], [12.6, -4.2, 1.15], [17, 3.5, 1.3], [-15, -12, 1.2], [-6, 15, 1.1], [14, 14, 1.25]]) {
     put(sunP, x, z, s, rnd() * 6.283, 0.03, 1.5); out.sunflowers.push({ x, z, top: Y(x, z) + 1.5 * s }); out.beePerches.push([x, Y(x, z) + 1.45 * s, z]);
   }
-  for (let i = 0; i < 90; i++) {
-    const inBed = i < 45, x = inBed ? W.flowerbed.x + (rnd() - 0.5) * 6 : (rnd() - 0.5) * 26, z = inBed ? W.flowerbed.z + (rnd() - 0.5) * 6 : (rnd() - 0.5) * 26;
+  for (let i = 0; i < 150; i++) {
+    const inBed = i < 45, x = inBed ? W.flowerbed.x + (rnd() - 0.5) * 6 : (rnd() - 0.5) * 40, z = inBed ? W.flowerbed.z + (rnd() - 0.5) * 6 : (rnd() - 0.5) * 40;
     const sName = surfaceAt(x, z).name; if (sName !== 'grass' || grassDensity(x, z) < 0.15) continue;
     const k = rnd();
     if (k < 0.2) { put(danP, x, z, 0.8 + rnd() * 0.6, undefined, 0.006, 0.3); out.beePerches.push([x, Y(x, z) + 0.3, z]); }
@@ -213,7 +213,7 @@ export function buildGarden(scene, q) {
   for (let i = 0; i < 26; i++) { const a = rnd() * 6.283, r = W.workshop.r + 0.05 + rnd() * 0.5, x = Math.cos(a) * r, z = Math.sin(a) * r; if (x > 0.9 && Math.abs(z) < 1.5) continue; put(i % 3 === 0 ? cloP : i % 3 === 1 ? vioP : daiP, x, z, 1 + rnd() * 0.8); }
 
   // ---- rocks
-  for (const [x, z, r, moss] of [[-1.75, 1.35, 0.3, 0.9], [-2.1, 1.1, 0.17, 0.7], [1.2, -2.3, 0.22, 0.6], [4.4, 2.7, 0.35, 0.8], [-6.5, -5.5, 0.6, 0.8], [9.2, -3.5, 0.45, 0.5], [-3.5, 6.2, 0.3, 0.3], [8.8, 9.2, 0.5, 0.9], [W.pond.x - 2.9, W.pond.z + 1.2, 0.3, 0.7], [W.pond.x + 2.6, W.pond.z + 1.9, 0.38, 0.8], [-12, 2, 0.7, 0.7], [3, -11, 0.6, 0.6]]) {
+  for (const [x, z, r, moss] of [[-1.75, 1.35, 0.3, 0.9], [-2.1, 1.1, 0.17, 0.7], [1.2, -2.3, 0.22, 0.6], [4.4, 2.7, 0.35, 0.8], [-6.5, -5.5, 0.6, 0.8], [9.2, -3.5, 0.45, 0.5], [-3.5, 6.2, 0.3, 0.3], [8.8, 9.2, 0.5, 0.9], [W.pond.x - 2.9, W.pond.z + 1.2, 0.3, 0.7], [W.pond.x + 2.6, W.pond.z + 1.9, 0.38, 0.8], [-12, 2, 0.7, 0.7], [3, -11, 0.6, 0.6], [15, 6, 0.8, 0.8], [17, -9, 0.55, 0.6], [-16, 12, 0.9, 0.7], [-17, -6, 0.5, 0.5], [9, 16, 0.7, 0.8], [-4, -16, 0.65, 0.7]]) {
     const m = rock(r, x * 3.1 + z, moss); m.position.set(x, Y(x, z) + r * 0.2, z); m.rotation.y = rnd() * 6; scene.add(m); addCollider({ t: 'sph', x, y: Y(x, z) + r * 0.1, z, r: r * 0.82 });
   }
   out.snailRock = { x: -1.75, z: 1.35, y: Y(-1.75, 1.35) + 0.3 * 0.2 + 0.3 * 0.62 };
@@ -259,13 +259,13 @@ export function buildGarden(scene, q) {
     scatter(scene, new THREE.SphereGeometry(1, 10, 8), out.dewMat, q.dew, rnd, (r, d, c) => { const a = r() * 6.283, rad = 1 + r() * 4.5, x = Math.cos(a) * rad, z = Math.sin(a) * rad; if (grassDensity(x, z) < 0.5) return false; const s = 0.004 + r() * 0.007; d.position.set(x, Y(x, z) + 0.05 + r() * 0.2, z); d.rotation.set(0, 0, 0); d.scale.set(s, s * 1.15, s); c.set(0xffffff); return true; }, false); }
 
   // ---- garden fence + the blurry giants beyond it
-  { const n = 4 * 46, im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.74, 2.6, 0.06), new THREE.MeshStandardMaterial({ map: T.wood('grey'), roughness: 1, color: 0x9a927e }), n), d = new THREE.Object3D(); let k = 0;
-    for (let s = 0; s < 4; s++) for (let i = 0; i < 46; i++) { const t = -17.2 + i * 0.76, x = s === 0 ? t : s === 1 ? t : s === 2 ? -17.2 : 17.2, z = s === 0 ? -17.2 : s === 1 ? 17.2 : t; d.position.set(x, Y(x, z) + 1.1 + (hashI(i, s) - 0.5) * 0.1, z); d.rotation.set(0, s > 1 ? Math.PI / 2 : 0, (hashI(i + 9, s) - 0.5) * 0.03); d.updateMatrix(); im.setMatrixAt(k++, d.matrix); }
+  { const n = 4 * 64, im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.74, 2.6, 0.06), new THREE.MeshStandardMaterial({ map: T.wood('grey'), roughness: 1, color: 0x9a927e }), n), d = new THREE.Object3D(); let k = 0;
+    for (let s = 0; s < 4; s++) for (let i = 0; i < 64; i++) { const t = -24.2 + i * 0.76, x = s === 0 ? t : s === 1 ? t : s === 2 ? -24.2 : 24.2, z = s === 0 ? -24.2 : s === 1 ? 24.2 : t; d.position.set(x, Y(x, z) + 1.1 + (hashI(i, s) - 0.5) * 0.1, z); d.rotation.set(0, s > 1 ? Math.PI / 2 : 0, (hashI(i + 9, s) - 0.5) * 0.03); d.updateMatrix(); im.setMatrixAt(k++, d.matrix); }
     im.castShadow = im.receiveShadow = true; scene.add(im);
     const far = new THREE.Group(), fm = [Mat.color(0x3d6b2e, 1), Mat.color(0x4d7c35, 1), Mat.color(0x2f5a2a, 1)];
-    for (let i = 0; i < 46; i++) { const a = i / 46 * 6.283 + rnd() * 0.1, r = 24 + rnd() * 10, s = 3 + rnd() * 4.5; const m = sph(s, fm[i % 3], Math.cos(a) * (r + 6), 1.5 + rnd() * 3, Math.sin(a) * (r + 6), 18); m.scale.y = 0.8 + rnd() * 0.7; far.add(m); }
+    for (let i = 0; i < 46; i++) { const a = i / 46 * 6.283 + rnd() * 0.1, r = 24 + rnd() * 10, s = 3 + rnd() * 4.5; const m = sph(s, fm[i % 3], Math.cos(a) * (r + 13), 1.5 + rnd() * 3, Math.sin(a) * (r + 13), 18); m.scale.y = 0.8 + rnd() * 0.7; far.add(m); }
     // a tree trunk towering in the north-west corner, with roots
-    const bark = new THREE.MeshStandardMaterial({ map: T.bark(), roughness: 1 }); const tx = -13.5, tz = -12.5;
+    const bark = new THREE.MeshStandardMaterial({ map: T.bark(), roughness: 1 }); const tx = -20.5, tz = -19.5;
     far.add(cyl(1.5, 2.3, 14, bark, tx, 6.5, tz, 16)); for (let i = 0; i < 7; i++) { const a = i * 0.9, r0 = rod([tx + Math.cos(a) * 1.6, 0.9, tz + Math.sin(a) * 1.6], [tx + Math.cos(a) * 5, -0.2, tz + Math.sin(a) * 5], 0.35, bark, 8); far.add(r0); }
     far.add(sph(8, fm[0], tx, 17, tz, 10), sph(6, fm[1], tx + 5, 15, tz + 3, 10));
     scene.add(bake(far, { cast: false })); addCollider({ t: 'cyl', x: tx, z: tz, r: 2.2, y0: -1, y1: 14 });

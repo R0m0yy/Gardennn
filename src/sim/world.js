@@ -15,7 +15,7 @@ export function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6
 
 // ---- layout (metres; north is -Z, east is +X). A one-inch inventor is 0.025 tall.
 export const WORLD = {
-  half: 15,                                   // garden fence at +-16
+  half: 22,                                   // garden fence at +-16
   workshop: { x: 0, z: 0, r: 0.95 },
   hill: { x: -3.2, z: -2.4, r: 2.3, h: 1.35, top: 0.32 },
   runway: { x0: 1.6, x1: 10.5, z: 1.1, w: 0.8, heading: Math.PI / 2 },
@@ -71,7 +71,7 @@ function rawHeight(x, z) {
 }
 // The terrain is sampled once onto a grid; physics and the rendered mesh both read this grid, so wheels
 // and feet sit exactly on the ground you see.
-export const GRID = { half: 22, step: 0.1, n: 441, data: null };
+export const GRID = { half: 30, step: 0.125, n: 481, data: null };
 function gridData() {
   if (GRID.data) return GRID.data;
   const { half, step, n } = GRID, d = new Float32Array(n * n);

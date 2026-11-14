@@ -1,7 +1,0 @@
-import { open } from './lib.mjs';
-const { page, step, errors, close } = await open('q=low&manual=1', 480, 360);
-const ev = (fn, arg) => page.evaluate(fn, arg);
-await ev(() => { localStorage.clear(); const g = window.__game; g.startMode('sandbox'); g.spawnCraft(JSON.parse(JSON.stringify(g.constructor && 0 || null)) || null); }).catch(() => {});
-await ev(async () => { const g = window.__game; const m = await import('./src/sim/blueprint.js'); g.spawnCraft(m.cloneBlueprint(m.TEMPLATES.scout_1917)); g.beginFlight('runway', true); g.input.keys.add('ShiftLeft'); window.__log = []; g.craft.ac.onEvent = (e) => window.__log.push(e.t.toFixed(2) + ' ' + e.type + ' ' + e.msg); });
-for (let i = 0; i < 16; i++) { await page.evaluate((i) => { const g = window.__game; if (i === 7) g.input.keys.add("KeyS"); if (i === 10) g.input.keys.delete("KeyS"); for (let k = 0; k < 10; k++) { g.skipRender = true; g.frame(1 / 30); } const a = g.craft.ac; window.__log.push(`t=${a.t.toFixed(2)} V=${a.airspeed.toFixed(2)} pos=${a.pos.map((v) => v.toFixed(3))} pitch=${(g.hpr.pitch * 57.3).toFixed(1)} roll=${(g.hpr.roll * 57.3).toFixed(1)} hdg=${(g.hpr.heading * 57.3).toFixed(0)} thr=${g.session.throttle.toFixed(2)} lvl=${a.engines[0].level.toFixed(2)} T=${a.engines[0].thrust.toFixed(3)} agl=${a.agl.toFixed(2)} st=${a.stall.toFixed(2)}`); }, i); }
-console.log((await ev(() => window.__log)).join('\n')); await close();

@@ -48,7 +48,7 @@ export class Panels {
       row('Glow (bloom)', chk('bloom')), row('Miniature lens blur', chk('lens')),
       row('Volume', rng('master', 0, 1, 0.05)), row('Invert pitch', chk('invertPitch')), row('Tutorial hints', chk('hints')),
       row('Length of a day', sel('dayMinutes', [[12, '12 minutes'], [24, '24 minutes'], [60, '1 hour'], [0, 'Frozen at golden hour']])),
-      h('div.rowbtns', btn('Erase all progress', () => { if (confirm('Erase every blueprint, record and unlock?')) g.eraseSave(); }, 'quiet'), btn('Done', () => { g.persist(); fromMenu ? this.menu() : this.pause(); }, 'primary'))));
+      h('div.rowbtns', btn('Erase all progress', (e) => { if (e.target.dataset.sure) g.eraseSave(); else { e.target.dataset.sure = '1'; e.target.textContent = 'Tap again to erase everything'; } }, 'quiet'), btn('Done', () => { g.persist(); fromMenu ? this.menu() : this.pause(); }, 'primary'))));
   }
 
   pause() {

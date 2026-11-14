@@ -295,7 +295,8 @@ export class Aircraft {
         if (this.stall > 0.02 || this.alpha > 0.14) ctrl.pitch -= assist * clamp(this.stall * 2.2 + Math.max(0, this.alpha - 0.14) * 5, 0, 1.2);
         // artificial stability for tail-heavy designs: hold angle of attack near a safe value
         const unst = clamp(0.1 - this.smEst, 0, 0.35);
-        if (unst > 0) ctrl.pitch -= assist * unst * 14 * (this.alpha - (0.06 + 0.08 * input.pitch));
+        if (unst > 0) { const fbw = Math.min(1, unst * 8) * assist;   // the stick asks for an angle of attack instead of moving the elevator directly
+          ctrl.pitch = ctrl.pitch * (1 - fbw) + this.trim * fbw - assist * unst * 14 * (this.alpha - (0.10 + 0.05 * input.pitch)); }
         // in a banked turn hold the nose up a little
         ctrl.pitch += assist * clamp(1 / Math.max(Math.cos(hpr.roll), 0.5) - 1, 0, 1) * 0.5;
       }
@@ -395,7 +396,8 @@ export class Aircraft {
       if (!c.touching) { c.touching = true; this._impact(c, Math.max(0, -vn), len(vP), surf); }
       if (c.kind !== 'tip' && c.kind !== 'prop') ground = true;
       if (c.kind === 'prop') { if (c.eng.level > 0.2 && c.eng.health > 0.3) { c.eng.health = 0.1; this._emit('damage', 'Propeller struck the ground and shattered', { id: c.id }); } continue; }
-      const Fn = Math.max(0, kS * Math.min(depth, 0.02) - cS * vn);
+      const soft = c.kind === 'tip' ? 0.25 : 1;   // wingtips are springy; keeps light airframes from chattering
+      const Fn = Math.max(0, soft * (kS * Math.min(depth, 0.02) - cS * vn));
       const vt = sub(vP, scale(nrm, vn));
       const sm = surf ? surf.mu : 1;
       let fT;
@@ -414,19 +416,7 @@ export class Aircraft {
     this.onGround = ground; this.inWater = water;
     M = add(M, qInvRot(q, Mw));
 
-    // ----- moisture: rain and pond water soak paper and card
-    const rain = env.rain || 0;
-    if (rain > 0 || water || this._wet) {
-      let wetMass = 0; this._wet = false;
-      const soakUp = (o, soak, m) => {
-        if (soak > 0) o.moisture = clamp(o.moisture + soak * h * (water ? 0.35 : rain / 45) - (rain || water ? 0 : h / 240), 0, 1);
-        if (o.moisture > 0) this._wet = true;
-        wetMass += m * o.moisture * 0.9;
-      };
-      for (const s of this.surfs) soakUp(s, s.mat.soak, s.area * s.mat.areal);
-      soakUp(this.fus, this.fus.mat.soak, this.masses[0].m);
-      this.mass = this.dryMass + wetMass;
-    }
+    this.soak(h, env.rain || 0, water);
 
     // ----- integrate
     const I = this.I;
@@ -442,10 +432,25 @@ export class Aircraft {
     this.airspeed = len(vAir);
     this.slip = this.airspeed > 0.5 ? Math.asin(clamp(vAir[2] / this.airspeed, -1, 1)) : 0;
     this.t += h;
+    if ((ground || water) && len(this.vel) < 0.6) { const k = Math.exp(-10 * h); this.w = [this.w[0] * k, this.w[1] * k, this.w[2] * k]; }   // scrubbing on the ground kills tumbling
     // rest: stop micro-creep once parked
     const thrusting = this.engines.some((e) => e.level > 0.05);
-    if ((ground || water) && !thrusting && len(this.vel) < 0.06 && len(this.w) < 0.6) { this.restT = (this.restT || 0) + h; if (this.restT > 0.4) { this.vel = [0, 0, 0]; this.w = [0, 0, 0]; this.asleep = true; } }
+    if ((ground || water) && !thrusting && len(this.vel) < 0.09 && len(this.w) < 2) { this.restT = (this.restT || 0) + h; if (this.restT > 0.4) { this.vel = [0, 0, 0]; this.w = [0, 0, 0]; this.asleep = true; } }
     else { this.restT = 0; this.asleep = false; }
+  }
+
+  // moisture: rain and pond water soak paper and card (heavier, weaker, floppier); sun dries them slowly
+  soak(h, rain, water = false) {
+    if (!(rain > 0 || water || this._wet)) return;
+    let wetMass = 0; this._wet = false;
+    const up = (o, soak, m) => {
+      if (soak > 0) o.moisture = clamp(o.moisture + soak * h * (water ? 0.35 : rain / 25) - (rain || water ? 0 : h / 240), 0, 1);
+      if (o.moisture > 0) this._wet = true;
+      wetMass += m * o.moisture * 0.9;
+    };
+    for (const s of this.surfs) up(s, s.mat.soak, s.area * s.mat.areal);
+    up(this.fus, this.fus.mat.soak, this.masses[0].m);
+    this.mass = this.dryMass + wetMass;
   }
 
   _impact(c, vn, vTot, surf) {

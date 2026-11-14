@@ -26,7 +26,7 @@ const LensShader = {
   uniforms: { tDiffuse: { value: null }, px: { value: new THREE.Vector2(1 / 1280, 1 / 720) }, amount: { value: 1 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   fragmentShader: `uniform sampler2D tDiffuse; uniform vec2 px; uniform float amount; varying vec2 vUv;
-    void main(){ float b = amount * 5.0 * smoothstep(0.2, 0.52, abs(vUv.y - 0.5));
+    void main(){ float b = amount * 3.2 * smoothstep(0.27, 0.52, abs(vUv.y - 0.5));
       vec4 c = texture2D(tDiffuse, vUv) * 0.2;
       c += (texture2D(tDiffuse, vUv + vec2(1.0, 0.4) * px * b) + texture2D(tDiffuse, vUv + vec2(-1.0, -0.4) * px * b) + texture2D(tDiffuse, vUv + vec2(0.4, -1.0) * px * b) + texture2D(tDiffuse, vUv + vec2(-0.4, 1.0) * px * b)) * 0.125;
       c += (texture2D(tDiffuse, vUv + vec2(0.7, 0.7) * px * b * 1.8) + texture2D(tDiffuse, vUv + vec2(-0.7, 0.7) * px * b * 1.8) + texture2D(tDiffuse, vUv + vec2(0.7, -0.7) * px * b * 1.8) + texture2D(tDiffuse, vUv + vec2(-0.7, -0.7) * px * b * 1.8)) * 0.075;
@@ -39,6 +39,7 @@ class Game {
   constructor() {
     const params = new URLSearchParams(location.search);
     this.save = Save.load(); this.ui = document.getElementById('ui'); this.canvas = document.getElementById('view');
+    if (this.save.fresh && (navigator.maxTouchPoints > 0 || innerWidth < 800)) this.save.settings.quality = 'low';   // first run on phones/tablets
     const qKey = params.get('q') || this.save.settings.quality; this.q = QUALITY[qKey] || QUALITY.medium; this.qKey = qKey;
     const r = this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, powerPreference: 'high-performance' });
     r.setPixelRatio(Math.min(devicePixelRatio, this.q.pr)); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.08;
@@ -210,7 +211,8 @@ class Game {
     P.update(dt, mv, inp.down('ShiftLeft', 'ShiftRight') || ml > 0.9 && (inp.touch || !!inp.pad), inp.pressed('Space'), inp.down('KeyC'), this.audio, this.weather.wet);
     this.focus.copy(P.pos); rig.update(dt, this.focus, null);
     if (c) { if (this.carry) { c.ac.pos = [P.pos.x, P.pos.y + 0.034 - c.ac.lowestY * 0.2, P.pos.z]; c.mesh.position.set(...c.ac.pos); c.mesh.rotation.set(0, Math.PI / 2 - (Math.PI / 2 - P.yaw) + Math.PI / 2 - Math.PI / 2, 0); c.mesh.rotation.y = P.yaw - Math.PI / 2; }
-      else if (!c.ac.asleep) { c.ac.update(dt * TIME_SCALE, { pitch: 0, roll: 0, yaw: 0, throttle: 0, assist: 0 }, this.env); c.sync(dt); } }
+      else if (!c.ac.asleep) { c.ac.update(dt * TIME_SCALE, { pitch: 0, roll: 0, yaw: 0, throttle: 0, assist: 0 }, this.env); c.sync(dt); }
+      else c.ac.soak(dt * TIME_SCALE, Math.hypot(c.ac.pos[0] - HUT.x, c.ac.pos[2] - HUT.z) < 0.5 ? 0 : this.weather.rain); }   // left out in the rain (the hut and awning keep it dry)
     // interactions
     let prompt = null, act = null;
     if (this.carry) { const site = Object.entries(SITES).find(([, s]) => Math.hypot(P.pos.x - s.pos[0], P.pos.z - s.pos[2]) < 0.45);
